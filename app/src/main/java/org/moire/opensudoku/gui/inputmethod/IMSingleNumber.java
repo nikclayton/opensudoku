@@ -20,7 +20,6 @@
 
 package org.moire.opensudoku.gui.inputmethod;
 
-
 import android.content.Context;
 import android.os.Handler;
 import android.view.LayoutInflater;

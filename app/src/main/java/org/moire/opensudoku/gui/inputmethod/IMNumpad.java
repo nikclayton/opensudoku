@@ -26,6 +26,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.TextView;
 
 import org.moire.opensudoku.R;
 import org.moire.opensudoku.game.Cell;
@@ -45,46 +46,65 @@ import java.util.Map;
 public class IMNumpad extends InputMethod {
 
     private static final int MODE_EDIT_VALUE = 0;
-    private static final int MODE_EDIT_NOTE = 1;
+    private static final int MODE_EDIT_CORNER_NOTE = 1;
+    private static final int MODE_EDIT_CENTRE_NOTE = 2;
+
     private boolean moveCellSelectionOnPress = true;
     private boolean mHighlightCompletedValues = true;
     private boolean mShowNumberTotals = false;
     private Cell mSelectedCell;
-    private ImageButton mSwitchNumNoteButton;
 
     private int mEditMode = MODE_EDIT_VALUE;
 
     private Map<Integer, Button> mNumberButtons;
-    private OnClickListener mNumberButtonClick = new OnClickListener() {
+    // Conceptually these behave like RadioButtons. However, it's difficult to style a RadioButton
+    // without re-implementing all the drawables, and they would require a custom parent layout
+    // to work properly in a ConstraintLayout, so it's simpler and more consistent in the UI to
+    // handle the toggle logic in the code here.
+    private ImageButton mEnterNumberButton;
+    private ImageButton mCornerNoteButton;
+    private ImageButton mCentreNoteButton;
 
-        @Override
-        public void onClick(View v) {
-            int selNumber = (Integer) v.getTag();
-            Cell selCell = mSelectedCell;
+    private ImageButton mClearButton;
 
-            if (selCell != null) {
-                switch (mEditMode) {
-                    case MODE_EDIT_NOTE:
-                        if (selNumber == 0) {
-                            mGame.setCellCornerNote(selCell, CellNote.EMPTY);
-                        } else if (selNumber > 0 && selNumber <= 9) {
-                            mGame.setCellCornerNote(selCell, selCell.getCornerNote().toggleNumber(selNumber));
+    private OnClickListener mNumberButtonClick = v -> {
+        int selNumber = (Integer) v.getTag();
+        Cell selCell = mSelectedCell;
+
+        if (selCell != null) {
+            switch (mEditMode) {
+                case MODE_EDIT_VALUE:
+                    if (selNumber >= 0 && selNumber <= 9) {
+                        mGame.setCellValue(selCell, selNumber);
+                        mBoard.setHighlightedValue(selNumber);
+                        if (isMoveCellSelectionOnPress()) {
+                            mBoard.moveCellSelectionRight();
                         }
-                        break;
-                    case MODE_EDIT_VALUE:
-                        if (selNumber >= 0 && selNumber <= 9) {
-                            mGame.setCellValue(selCell, selNumber);
-                            mBoard.setHighlightedValue(selNumber);
-                            if (isMoveCellSelectionOnPress()) {
-                                mBoard.moveCellSelectionRight();
-                            }
-                        }
-                        break;
-                }
+                    }
+                    break;
+                case MODE_EDIT_CORNER_NOTE:
+                    if (selNumber == 0) {
+                        mGame.setCellCornerNote(selCell, CellNote.EMPTY);
+                    } else if (selNumber > 0 && selNumber <= 9) {
+                        mGame.setCellCornerNote(selCell, selCell.getCornerNote().toggleNumber(selNumber));
+                    }
+                    break;
+                case MODE_EDIT_CENTRE_NOTE:
+                    if (selNumber == 0) {
+                        mGame.setCellCentreNote(selCell, CellNote.EMPTY);
+                    } else if (selNumber > 0 && selNumber <= 9) {
+                        mGame.setCellCentreNote(selCell, selCell.getCentreNote().toggleNumber(selNumber));
+                    }
+                    break;
             }
         }
-
     };
+
+    private OnClickListener mModeButtonClicked = v -> {
+        mEditMode = (Integer) v.getTag();
+        update();
+    };
+
     private OnChangeListener mOnCellsChangeListener = () -> {
         if (mActive) {
             update();
@@ -144,22 +164,31 @@ public class IMNumpad extends InputMethod {
         mNumberButtons.put(7, controlPanel.findViewById(R.id.button_7));
         mNumberButtons.put(8, controlPanel.findViewById(R.id.button_8));
         mNumberButtons.put(9, controlPanel.findViewById(R.id.button_9));
-        mNumberButtons.put(0, controlPanel.findViewById(R.id.button_clear));
+        //mNumberButtons.put(0, controlPanel.findViewById(R.id.button_clear));
 
         for (Integer num : mNumberButtons.keySet()) {
-            Button b = mNumberButtons.get(num);
+            View b = mNumberButtons.get(num);
             b.setTag(num);
             b.setOnClickListener(mNumberButtonClick);
         }
 
-        mSwitchNumNoteButton = controlPanel.findViewById(R.id.switch_num_note);
-        mSwitchNumNoteButton.setOnClickListener(v -> {
-            mEditMode = mEditMode == MODE_EDIT_VALUE ? MODE_EDIT_NOTE : MODE_EDIT_VALUE;
-            update();
-        });
+        mClearButton = controlPanel.findViewById(R.id.button_clear);
+        mClearButton.setTag(0);
+        mClearButton.setOnClickListener(mNumberButtonClick);
+
+        mEnterNumberButton = controlPanel.findViewById(R.id.enter_number);
+        mEnterNumberButton.setTag(MODE_EDIT_VALUE);
+        mEnterNumberButton.setOnClickListener(mModeButtonClicked);
+
+        mCornerNoteButton = controlPanel.findViewById(R.id.corner_note);
+        mCornerNoteButton.setTag(MODE_EDIT_CORNER_NOTE);
+        mCornerNoteButton.setOnClickListener(mModeButtonClicked);
+
+        mCentreNoteButton = controlPanel.findViewById(R.id.centre_note);
+        mCentreNoteButton.setTag(MODE_EDIT_CENTRE_NOTE);
+        mCentreNoteButton.setOnClickListener(mModeButtonClicked);
 
         return controlPanel;
-
     }
 
     @Override
@@ -194,35 +223,62 @@ public class IMNumpad extends InputMethod {
         update();
     }
 
+    // TODO: Maybe refactor the common code between this an IMSingleNumber.java in to a parent
+    // class. Or re-think how communication between the keyboard and the game state works.
     private void update() {
-        switch (mEditMode) {
-            case MODE_EDIT_NOTE:
-                mSwitchNumNoteButton.setImageResource(R.drawable.ic_edit_white);
-                break;
-            case MODE_EDIT_VALUE:
-                mSwitchNumNoteButton.setImageResource(R.drawable.ic_edit_grey);
-                break;
-        }
+        CellNote note;
+        List<Integer> notedNumbers;
 
-        if (mEditMode == MODE_EDIT_VALUE) {
-            int selectedNumber = mSelectedCell == null ? 0 : mSelectedCell.getValue();
-            for (Button b : mNumberButtons.values()) {
-                if (b.getTag().equals(selectedNumber)) {
-                    ThemeUtils.applyIMButtonStateToView(b, ThemeUtils.IMButtonStyle.ACCENT);
-                } else {
-                    ThemeUtils.applyIMButtonStateToView(b, ThemeUtils.IMButtonStyle.DEFAULT);
+        switch (mEditMode) {
+            case MODE_EDIT_VALUE:
+                // Keyboard should highlight the current value, which may be empty
+                ThemeUtils.applyIMButtonStateToImageButton(mEnterNumberButton, ThemeUtils.IMButtonStyle.ACCENT);
+                ThemeUtils.applyIMButtonStateToImageButton(mCornerNoteButton, ThemeUtils.IMButtonStyle.DEFAULT);
+                ThemeUtils.applyIMButtonStateToImageButton(mCentreNoteButton, ThemeUtils.IMButtonStyle.DEFAULT);
+
+                int selectedNumber = mSelectedCell == null ? 0 : mSelectedCell.getValue();
+                for (Button b : mNumberButtons.values()) {
+                    if (b.getTag().equals(selectedNumber)) {
+                        ThemeUtils.applyIMButtonStateToView(b, ThemeUtils.IMButtonStyle.ACCENT);
+                    } else {
+                        ThemeUtils.applyIMButtonStateToView(b, ThemeUtils.IMButtonStyle.DEFAULT);
+                    }
                 }
-            }
-        } else {
-            CellNote note = mSelectedCell == null ? new CellNote() : mSelectedCell.getCornerNote();
-            List<Integer> notedNumbers = note.getNotedNumbers();
-            for (Button b : mNumberButtons.values()) {
-                if (notedNumbers.contains(b.getTag())) {
-                    ThemeUtils.applyIMButtonStateToView(b, ThemeUtils.IMButtonStyle.ACCENT);
-                } else {
-                    ThemeUtils.applyIMButtonStateToView(b, ThemeUtils.IMButtonStyle.DEFAULT);
+
+                break;
+            case MODE_EDIT_CORNER_NOTE:
+                // Keyboard should highlight all the buttons corresponding to active corner notes
+                ThemeUtils.applyIMButtonStateToImageButton(mEnterNumberButton, ThemeUtils.IMButtonStyle.DEFAULT);
+                ThemeUtils.applyIMButtonStateToImageButton(mCornerNoteButton, ThemeUtils.IMButtonStyle.ACCENT);
+                ThemeUtils.applyIMButtonStateToImageButton(mCentreNoteButton, ThemeUtils.IMButtonStyle.DEFAULT);
+
+                note = mSelectedCell == null ? new CellNote() : mSelectedCell.getCornerNote();
+                notedNumbers = note.getNotedNumbers();
+                for (Button b : mNumberButtons.values()) {
+                    if (notedNumbers.contains(b.getTag())) {
+                        ThemeUtils.applyIMButtonStateToView((TextView) b, ThemeUtils.IMButtonStyle.ACCENT);
+                    } else {
+                        ThemeUtils.applyIMButtonStateToView((TextView) b, ThemeUtils.IMButtonStyle.DEFAULT);
+                    }
                 }
-            }
+
+                break;
+            case MODE_EDIT_CENTRE_NOTE:
+                // Keyboard should highlight all the buttons corresponding to active centre notes
+                ThemeUtils.applyIMButtonStateToImageButton(mEnterNumberButton, ThemeUtils.IMButtonStyle.DEFAULT);
+                ThemeUtils.applyIMButtonStateToImageButton(mCornerNoteButton, ThemeUtils.IMButtonStyle.DEFAULT);
+                ThemeUtils.applyIMButtonStateToImageButton(mCentreNoteButton, ThemeUtils.IMButtonStyle.ACCENT);
+
+                note = mSelectedCell == null ? new CellNote() : mSelectedCell.getCentreNote();
+                notedNumbers = note.getNotedNumbers();
+                for (Button b : mNumberButtons.values()) {
+                    if (notedNumbers.contains(b.getTag())) {
+                        ThemeUtils.applyIMButtonStateToView((TextView) b, ThemeUtils.IMButtonStyle.ACCENT);
+                    } else {
+                        ThemeUtils.applyIMButtonStateToView((TextView) b, ThemeUtils.IMButtonStyle.DEFAULT);
+                    }
+                }
+                break;
         }
 
         Map<Integer, Integer> valuesUseCount = null;
@@ -234,17 +290,17 @@ public class IMNumpad extends InputMethod {
             for (Map.Entry<Integer, Integer> entry : valuesUseCount.entrySet()) {
                 boolean highlightValue = entry.getValue() >= CellCollection.SUDOKU_SIZE;
                 boolean selected = entry.getKey() == selectedNumber;
-                Button b = mNumberButtons.get(entry.getKey());
+                View b = mNumberButtons.get(entry.getKey());
                 if (highlightValue && !selected) {
-                    ThemeUtils.applyIMButtonStateToView(b, ThemeUtils.IMButtonStyle.ACCENT_HIGHCONTRAST);
+                    ThemeUtils.applyIMButtonStateToView((TextView) b, ThemeUtils.IMButtonStyle.ACCENT_HIGHCONTRAST);
                 }
             }
         }
 
         if (mShowNumberTotals) {
             for (Map.Entry<Integer, Integer> entry : valuesUseCount.entrySet()) {
-                Button b = mNumberButtons.get(entry.getKey());
-                b.setText(entry.getKey() + " (" + entry.getValue() + ")");
+                View b = mNumberButtons.get(entry.getKey());
+                ((TextView) b).setText(entry.getKey() + " (" + entry.getValue() + ")");
             }
         }
     }
