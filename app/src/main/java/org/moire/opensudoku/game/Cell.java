@@ -44,7 +44,7 @@ public class Cell {
 
     private int mValue;
     private CellNote mCornerNote;
-    private CellNote mCentreNote;
+    private CellNote mCenterNote;
     private boolean mEditable;
     private boolean mValid;
 
@@ -64,14 +64,14 @@ public class Cell {
         this(value, new CellNote(), new CellNote(), true, true);
     }
 
-    private Cell(int value, CellNote cornerNote, CellNote centreNote, boolean editable, boolean valid) {
+    private Cell(int value, CellNote cornerNote, CellNote centerNote, boolean editable, boolean valid) {
         if (value < 0 || value > 9) {
             throw new IllegalArgumentException("Value must be between 0-9.");
         }
 
         mValue = value;
         mCornerNote = cornerNote;
-        mCentreNote = centreNote;
+        mCenterNote = centerNote;
         mEditable = editable;
         mValid = valid;
     }
@@ -87,7 +87,7 @@ public class Cell {
         cell.setValue(Integer.parseInt(data.nextToken()));
         cell.setCornerNote(CellNote.deserialize(data.nextToken(), version));
         if (version >= DATA_VERSION_4) {
-            cell.setCentreNote(CellNote.deserialize(data.nextToken(), version));
+            cell.setCenterNote(CellNote.deserialize(data.nextToken(), version));
         }
         cell.setEditable(data.nextToken().equals("1"));
 
@@ -209,12 +209,12 @@ public class Cell {
     }
 
     /**
-     * Gets centre note attached to the cell.
+     * Gets center note attached to the cell.
      *
-     * @return Centre note attached to the cell.
+     * @return Center note attached to the cell.
      */
-    public CellNote getCentreNote() {
-        return mCentreNote;
+    public CellNote getCenterNote() {
+        return mCenterNote;
     }
 
     /**
@@ -228,22 +228,22 @@ public class Cell {
     }
 
     /**
-     * Sets centre note attached to the cell
+     * Sets center note attached to the cell
      *
-     * @param note Centre note attached to the cell
+     * @param note Center note attached to the cell
      */
-    public void setCentreNote(CellNote note) {
-        mCentreNote = note;
+    public void setCenterNote(CellNote note) {
+        mCenterNote = note;
         onChange();
     }
 
     /**
      * @return All notes associated with the cell, irrespective of whether
-     * they are corner notes or centre notes.
+     * they are corner notes or center notes.
      */
     public List<Integer> getNotedNumbers() {
         List<Integer> notes = this.getCornerNote().getNotedNumbers();
-        notes.addAll(this.getCentreNote().getNotedNumbers());
+        notes.addAll(this.getCenterNote().getNotedNumbers());
         return notes;
     }
 
@@ -304,10 +304,10 @@ public class Cell {
             } else {
                 mCornerNote.serialize(data);
             }
-            if (mCentreNote == null || mCentreNote.isEmpty()) {
+            if (mCenterNote == null || mCenterNote.isEmpty()) {
                 data.append("0").append("|");
             } else {
-                mCentreNote.serialize(data);
+                mCenterNote.serialize(data);
             }
             data.append(mEditable ? "1" : "0").append("|");
         }

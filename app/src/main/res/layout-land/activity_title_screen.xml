@@ -23,6 +23,7 @@
 
         <Button
             android:id="@+id/resume_button"
+            style="@style/Widget.Material3.Button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -30,6 +31,7 @@
 
         <Button
             android:id="@+id/sudoku_lists_button"
+            style="@style/Widget.Material3.Button.TonalButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -37,6 +39,7 @@
 
         <Button
             android:id="@+id/settings_button"
+            style="@style/Widget.Material3.Button.TextButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"

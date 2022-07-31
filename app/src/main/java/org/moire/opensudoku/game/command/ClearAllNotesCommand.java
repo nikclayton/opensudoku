@@ -38,12 +38,12 @@ public class ClearAllNotesCommand extends AbstractMultiNoteCommand {
             for (int c = 0; c < CellCollection.SUDOKU_SIZE; c++) {
                 Cell cell = cells.getCell(r, c);
                 CellNote cornerNote = cell.getCornerNote();
-                CellNote centreNote = cell.getCentreNote();
+                CellNote centerNote = cell.getCenterNote();
                 if (!cornerNote.isEmpty()) {
                     mOldCornerNotes.add(new NoteEntry(r, c, cornerNote));
-                    mOldCentreNotes.add(new NoteEntry(r, c, centreNote));
+                    mOldCenterNotes.add(new NoteEntry(r, c, centerNote));
                     cell.setCornerNote(new CellNote());
-                    cell.setCentreNote(new CellNote());
+                    cell.setCenterNote(new CellNote());
                 }
             }
         }

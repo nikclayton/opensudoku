@@ -24,113 +24,214 @@ import android.app.Dialog;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.Button;
-import android.widget.CompoundButton.OnCheckedChangeListener;
-import android.widget.FrameLayout;
-import android.widget.LinearLayout;
-import android.widget.LinearLayout.LayoutParams;
-import android.widget.TabHost;
-import android.widget.TabWidget;
-import android.widget.ToggleButton;
+
+import com.google.android.material.button.MaterialButton;
 
 import org.moire.opensudoku.R;
-import org.moire.opensudoku.utils.ThemeUtils;
+import org.moire.opensudoku.gui.NumberButton;
 
-import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Dialog for selecting and entering numbers and notes.
+ *
+ * When entering a number, the dialog automatically closes.
+ *
+ * When entering a note the dialog remains open, to allow multiple notes to be entered at once.
+ */
 public class IMPopupDialog extends Dialog {
 
     private Context mContext;
     private LayoutInflater mInflater;
-    private TabHost mTabHost;
 
-    // buttons from "Select number" tab
-    private Map<Integer, Button> mNumberButtons = new HashMap<>();
-    // buttons from "Edit note" tab
-    private Map<Integer, ToggleButton> mNoteNumberButtons = new HashMap<>();
+    // TODO: These are common across all input methods
+    private static final int MODE_EDIT_VALUE = 0;
+    private static final int MODE_EDIT_CORNER_NOTE = 1;
+    private static final int MODE_EDIT_CENTER_NOTE = 2;
+
+    private int mEditMode = MODE_EDIT_VALUE;
+
+    private final Map<Integer, NumberButton> mNumberButtons = new HashMap<>();
 
     // selected number on "Select number" tab (0 if nothing is selected).
     private int mSelectedNumber;
-    // selected numbers on "Edit note" tab
-    private Set<Integer> mNoteSelectedNumbers = new HashSet<>();
+    private final Set<Integer> mCornerNoteSelectedNumbers = new HashSet<>();
+
+    private final Set<Integer> mCenterNoteSelectedNumbers = new HashSet<>();
+
+    private final MaterialButton mEnterNumberButton;
+    private final MaterialButton mCornerNoteButton;
+    private final MaterialButton mCenterNoteButton;
 
     private OnNumberEditListener mOnNumberEditListener;
-    private OnNoteEditListener mOnNoteEditListener;
-    /**
-     * Occurs when user selects number in "Select number" tab.
-     */
-    private View.OnClickListener editNumberButtonClickListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            Integer number = (Integer) v.getTag();
+    private OnNoteEditListener onNoteEditListener;
 
-            if (mOnNumberEditListener != null) {
-                mOnNumberEditListener.onNumberEdit(number);
-            }
+    private Map<Integer, Integer> mValueCount = new HashMap<>();
 
-            dismiss();
+    private final View.OnClickListener mNumberButtonClicked = v -> {
+        int number = (Integer) v.getTag();
+
+        switch (mEditMode) {
+            case MODE_EDIT_VALUE:
+                mSelectedNumber = number;
+                syncAndDismiss();
+                break;
+            case MODE_EDIT_CORNER_NOTE:
+                if (((MaterialButton)v).isChecked()) {
+                    mCornerNoteSelectedNumbers.add(number);
+                } else {
+                    mCornerNoteSelectedNumbers.remove(number);
+                }
+                break;
+            case MODE_EDIT_CENTER_NOTE:
+                if (((MaterialButton)v).isChecked()) {
+                    mCenterNoteSelectedNumbers.add(number);
+                } else {
+                    mCenterNoteSelectedNumbers.remove(number);
+                }
+                break;
         }
     };
-    /**
-     * Occurs when user checks or unchecks number in "Edit note" tab.
-     */
-    private OnCheckedChangeListener editNoteCheckedChangeListener = (buttonView, isChecked) -> {
-        Integer number = (Integer) buttonView.getTag();
-        if (isChecked) {
-            mNoteSelectedNumbers.add(number);
-        } else {
-            mNoteSelectedNumbers.remove(number);
-        }
-        ThemeUtils.applyIMButtonStateToView(buttonView, isChecked ? ThemeUtils.IMButtonStyle.ACCENT : ThemeUtils.IMButtonStyle.DEFAULT);
-    };
+
     /**
      * Occurs when user presses "Clear" button.
      */
-    private View.OnClickListener clearButtonListener = new View.OnClickListener() {
+    private final View.OnClickListener clearButtonListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            String currentTab = mTabHost.getCurrentTabTag();
+            ((MaterialButton) v).setChecked(false);
+            switch (mEditMode) {
+                case MODE_EDIT_VALUE:
+                    mSelectedNumber = 0;
+                    syncAndDismiss();
+                    break;
+                case MODE_EDIT_CORNER_NOTE:
+                    // Clear the corner notes. Dialog should stay visible
+                    setCornerNotes(Collections.emptyList());
+                    break;
+                case MODE_EDIT_CENTER_NOTE:
+                    // Clear the center notes. Dialog should stay visible
+                    setCenterNotes(Collections.emptyList());
+                    break;
 
-            if (currentTab.equals("number")) {
-                if (mOnNumberEditListener != null) {
-                    mOnNumberEditListener.onNumberEdit(0); // 0 as clear
-                }
-                dismiss();
-            } else {
-                for (ToggleButton b : mNoteNumberButtons.values()) {
-                    b.setChecked(false);
-                    mNoteSelectedNumbers.remove(b.getTag());
-                }
             }
+            update();
         }
     };
+
     /**
      * Occurs when user presses "Close" button.
      */
-    private View.OnClickListener closeButtonListener = new View.OnClickListener() {
+    private final View.OnClickListener closeButtonListener = v -> syncAndDismiss();
 
-        @Override
-        public void onClick(View v) {
-            if (mOnNoteEditListener != null) {
-                Integer[] numbers = new Integer[mNoteSelectedNumbers.size()];
-                mOnNoteEditListener.onNoteEdit(mNoteSelectedNumbers.toArray(numbers));
-            }
-            dismiss();
+    /** Synchronises state with the hosting activity and dismisses the dialog */
+    private void syncAndDismiss() {
+        if (mOnNumberEditListener != null) {
+            mOnNumberEditListener.onNumberEdit(mSelectedNumber);
         }
-    };
+
+        if (onNoteEditListener != null) {
+            Integer[] numbers = new Integer[mCornerNoteSelectedNumbers.size()];
+            onNoteEditListener.onCornerNoteEdit(mCornerNoteSelectedNumbers.toArray(numbers));
+            numbers = new Integer[mCenterNoteSelectedNumbers.size()];
+            onNoteEditListener.onCenterNoteEdit(mCenterNoteSelectedNumbers.toArray(numbers));
+        }
+
+        dismiss();
+    }
 
     public IMPopupDialog(Context context) {
         super(context);
         mContext = context;
         mInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
-        mTabHost = createTabView();
+        View keypad = mInflater.inflate(R.layout.im_popup_edit_value, null);
 
-        setContentView(mTabHost);
+        mNumberButtons.put(1, keypad.findViewById(R.id.button_1));
+        mNumberButtons.put(2, keypad.findViewById(R.id.button_2));
+        mNumberButtons.put(3, keypad.findViewById(R.id.button_3));
+        mNumberButtons.put(4, keypad.findViewById(R.id.button_4));
+        mNumberButtons.put(5, keypad.findViewById(R.id.button_5));
+        mNumberButtons.put(6, keypad.findViewById(R.id.button_6));
+        mNumberButtons.put(7, keypad.findViewById(R.id.button_7));
+        mNumberButtons.put(8, keypad.findViewById(R.id.button_8));
+        mNumberButtons.put(9, keypad.findViewById(R.id.button_9));
+
+        for (Integer num : mNumberButtons.keySet()) {
+            View b = mNumberButtons.get(num);
+            b.setTag(num);
+            b.setOnClickListener(mNumberButtonClicked);
+        }
+
+        View clearButton = keypad.findViewById(R.id.button_clear);
+        clearButton.setTag(0);
+        clearButton.setOnClickListener(clearButtonListener);
+
+        mEnterNumberButton = keypad.findViewById(R.id.enter_number);
+        mEnterNumberButton.setTag(MODE_EDIT_VALUE);
+
+        /* Switch mode, and update the UI */
+        View.OnClickListener modeButtonClicked = v -> {
+            mEditMode = (Integer) v.getTag();
+            update();
+        };
+
+        mEnterNumberButton.setOnClickListener(modeButtonClicked);
+
+        mCornerNoteButton = keypad.findViewById(R.id.corner_note);
+        mCornerNoteButton.setTag(MODE_EDIT_CORNER_NOTE);
+        mCornerNoteButton.setOnClickListener(modeButtonClicked);
+
+        mCenterNoteButton = keypad.findViewById(R.id.center_note);
+        mCenterNoteButton.setTag(MODE_EDIT_CENTER_NOTE);
+        mCenterNoteButton.setOnClickListener(modeButtonClicked);
+
+        View closeButton = keypad.findViewById(R.id.button_close);
+        closeButton.setOnClickListener(closeButtonListener);
+
+        setContentView(keypad);
+    }
+
+    private void update() {
+        switch (mEditMode) {
+            case MODE_EDIT_VALUE:
+                mEnterNumberButton.setChecked(true);
+                mCornerNoteButton.setChecked(false);
+                mCenterNoteButton.setChecked(false);
+
+                for (MaterialButton b: mNumberButtons.values()) {
+                    b.setChecked(mSelectedNumber == (Integer) b.getTag());
+                }
+                break;
+            case MODE_EDIT_CORNER_NOTE:
+                mEnterNumberButton.setChecked(false);
+                mCornerNoteButton.setChecked(true);
+                mCenterNoteButton.setChecked(false);
+
+                for (MaterialButton b: mNumberButtons.values()) {
+                    b.setChecked(mCornerNoteSelectedNumbers.contains(b.getTag()));
+                }
+                break;
+            case MODE_EDIT_CENTER_NOTE:
+                mEnterNumberButton.setChecked(false);
+                mCornerNoteButton.setChecked(false);
+                mCenterNoteButton.setChecked(true);
+                for (MaterialButton b: mNumberButtons.values()) {
+                    b.setChecked(mCenterNoteSelectedNumbers.contains(b.getTag()));
+                }
+                break;
+        }
+
+        if (! mValueCount.isEmpty()) {
+            for (NumberButton b: mNumberButtons.values()) {
+                b.setNumbersPlaced(mValueCount.get(b.getTag()));
+            }
+        }
     }
 
     /**
@@ -148,181 +249,56 @@ public class IMPopupDialog extends Dialog {
      * @param l
      */
     public void setOnNoteEditListener(OnNoteEditListener l) {
-        mOnNoteEditListener = l;
+        onNoteEditListener = l;
     }
 
-    public void resetButtons() {
-        for (Map.Entry<Integer, ToggleButton> entry : mNoteNumberButtons.entrySet()) {
-            entry.getValue().setText("" + entry.getKey());
-            ThemeUtils.applyIMButtonStateToView(entry.getValue(), ThemeUtils.IMButtonStyle.DEFAULT);
-        }
-
-        for (Map.Entry<Integer, Button> entry : mNumberButtons.entrySet()) {
-            ThemeUtils.applyIMButtonStateToView(entry.getValue(), ThemeUtils.IMButtonStyle.DEFAULT);
-        }
+    /**
+     * Reset most of the state of the dialog (selected values, notes, etc).
+     *
+     * DO NOT reset the edit mode, for compatibility with the previous code that used a tab.
+     * The selected tab (which was the edit mode) was retained if the dialog was dismissed on
+     * one cell and opened on another.
+     */
+    public void resetState() {
+        mSelectedNumber = 0;
+        mCornerNoteSelectedNumbers.clear();
+        mCenterNoteSelectedNumbers.clear();
+        mValueCount.clear();
+        update();
     }
 
     // TODO: vsude jinde pouzivam misto number value
-    public void updateNumber(Integer number) {
+    public void setNumber(int number) {
         mSelectedNumber = number;
-        for (Map.Entry<Integer, Button> entry : mNumberButtons.entrySet()) {
-            Button b = entry.getValue();
-            if (entry.getKey().equals(mSelectedNumber)) {
-                ThemeUtils.applyIMButtonStateToView(b, ThemeUtils.IMButtonStyle.ACCENT);
-            } else {
-                ThemeUtils.applyIMButtonStateToView(b, ThemeUtils.IMButtonStyle.DEFAULT);
-            }
-        }
+        update();
     }
 
-    /**
-     * Updates selected numbers in note.
-     *
-     * @param numbers
-     */
-    public void updateNote(Collection<Integer> numbers) {
-        mNoteSelectedNumbers = new HashSet<>();
+    public void setCornerNotes(List<Integer> numbers) {
+        mCornerNoteSelectedNumbers.clear();
+        mCornerNoteSelectedNumbers.addAll(numbers);
+        update();
+    }
 
-        if (numbers != null) {
-            mNoteSelectedNumbers.addAll(numbers);
-        }
-
-        ToggleButton toggleButton;
-        for (Integer number : mNoteNumberButtons.keySet()) {
-            toggleButton = mNoteNumberButtons.get(number);
-            toggleButton.setChecked(mNoteSelectedNumbers.contains(number));
-            if (toggleButton.isChecked()) {
-                ThemeUtils.applyIMButtonStateToView(toggleButton, ThemeUtils.IMButtonStyle.ACCENT);
-            }
-        }
+    public void setCenterNotes(List<Integer> numbers) {
+        mCenterNoteSelectedNumbers.clear();
+        mCenterNoteSelectedNumbers.addAll(numbers);
+        update();
     }
 
     public void highlightNumber(int number) {
-
-        Button b = mNumberButtons.get(number);
-        if (number == mSelectedNumber) {
-            // Set color of completed and selected number
-            ThemeUtils.applyIMButtonStateToView(b, ThemeUtils.IMButtonStyle.ACCENT);
-        } else {
-            ThemeUtils.applyIMButtonStateToView(b, ThemeUtils.IMButtonStyle.ACCENT_HIGHCONTRAST);
-        }
+        NumberButton b = mNumberButtons.get(number);
+        b.setChecked(number == mSelectedNumber);
     }
 
-    public void setValueCount(int number, int count) {
-        mNumberButtons.get(number).setText(number + " (" + count + ")");
+    public void setValueCount(Map<Integer, Integer> count) {
+        mValueCount.clear();
+        mValueCount.putAll(count);
+        update();
     }
 
     /**
-     * Creates view with two tabs, first for number in cell selection, second for
-     * note editing.
-     *
-     * @return
-     */
-    private TabHost createTabView() {
-        TabHost tabHost = new TabHost(mContext, null);
-        tabHost.setLayoutParams(new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT));
-        //tabHost.setLayoutParams(new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
-
-        LinearLayout linearLayout = new LinearLayout(mContext);
-        linearLayout.setLayoutParams(new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT));
-        //linearLayout.setLayoutParams(new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
-        linearLayout.setOrientation(LinearLayout.VERTICAL);
-
-        TabWidget tabWidget = new TabWidget(mContext);
-        tabWidget.setLayoutParams(new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT));
-        tabWidget.setId(android.R.id.tabs);
-
-        FrameLayout frameLayout = new FrameLayout(mContext);
-        frameLayout.setId(android.R.id.tabcontent);
-
-        linearLayout.addView(tabWidget);
-        linearLayout.addView(frameLayout);
-        tabHost.addView(linearLayout);
-
-        tabHost.setup();
-
-        final View editNumberView = createEditNumberView();
-        final View editNoteView = createEditNoteView();
-
-        tabHost.addTab(tabHost.newTabSpec("number")
-                .setIndicator(mContext.getString(R.string.select_number))
-                .setContent(tag -> editNumberView));
-        tabHost.addTab(tabHost.newTabSpec("note")
-                .setIndicator(mContext.getString(R.string.edit_note))
-                .setContent(tag -> editNoteView));
-
-        return tabHost;
-    }
-
-    /**
-     * Creates view for number in cell editing.
-     *
-     * @return
-     */
-    private View createEditNumberView() {
-        View v = mInflater.inflate(R.layout.im_popup_edit_value, null);
-
-        mNumberButtons.put(1, v.findViewById(R.id.button_1));
-        mNumberButtons.put(2, v.findViewById(R.id.button_2));
-        mNumberButtons.put(3, v.findViewById(R.id.button_3));
-        mNumberButtons.put(4, v.findViewById(R.id.button_4));
-        mNumberButtons.put(5, v.findViewById(R.id.button_5));
-        mNumberButtons.put(6, v.findViewById(R.id.button_6));
-        mNumberButtons.put(7, v.findViewById(R.id.button_7));
-        mNumberButtons.put(8, v.findViewById(R.id.button_8));
-        mNumberButtons.put(9, v.findViewById(R.id.button_9));
-
-        for (Integer num : mNumberButtons.keySet()) {
-            Button b = mNumberButtons.get(num);
-            b.setTag(num);
-            b.setOnClickListener(editNumberButtonClickListener);
-        }
-
-        Button closeButton = v.findViewById(R.id.button_close);
-        closeButton.setOnClickListener(closeButtonListener);
-        Button clearButton = v.findViewById(R.id.button_clear);
-        clearButton.setOnClickListener(clearButtonListener);
-
-        return v;
-    }
-
-    /**
-     * Creates view for note editing.
-     *
-     * @return
-     */
-    private View createEditNoteView() {
-        View v = mInflater.inflate(R.layout.im_popup_edit_note, null);
-
-        mNoteNumberButtons.put(1, v.findViewById(R.id.button_1));
-        mNoteNumberButtons.put(2, v.findViewById(R.id.button_2));
-        mNoteNumberButtons.put(3, v.findViewById(R.id.button_3));
-        mNoteNumberButtons.put(4, v.findViewById(R.id.button_4));
-        mNoteNumberButtons.put(5, v.findViewById(R.id.button_5));
-        mNoteNumberButtons.put(6, v.findViewById(R.id.button_6));
-        mNoteNumberButtons.put(7, v.findViewById(R.id.button_7));
-        mNoteNumberButtons.put(8, v.findViewById(R.id.button_8));
-        mNoteNumberButtons.put(9, v.findViewById(R.id.button_9));
-
-        for (Integer num : mNoteNumberButtons.keySet()) {
-            ToggleButton b = mNoteNumberButtons.get(num);
-            b.setTag(num);
-            b.setOnCheckedChangeListener(editNoteCheckedChangeListener);
-        }
-
-        Button closeButton = v.findViewById(R.id.button_close);
-        closeButton.setOnClickListener(closeButtonListener);
-        Button clearButton = v.findViewById(R.id.button_clear);
-        clearButton.setOnClickListener(clearButtonListener);
-
-        return v;
-    }
-
-    /**
-     * Interface definition for a callback to be invoked, when user selects number, which
+     * Interface definition for a callback to be invoked, when user selects a number, which
      * should be entered in the sudoku cell.
-     *
-     * @author romario
      */
     public interface OnNumberEditListener {
         boolean onNumberEdit(int number);
@@ -331,11 +307,10 @@ public class IMPopupDialog extends Dialog {
     /**
      * Interface definition for a callback to be invoked, when user selects new note
      * content.
-     *
-     * @author romario
      */
     public interface OnNoteEditListener {
-        boolean onNoteEdit(Integer[] number);
+        boolean onCornerNoteEdit(Integer[] number);
+        boolean onCenterNoteEdit(Integer[] number);
     }
 
 }

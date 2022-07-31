@@ -14,6 +14,6 @@ public class FillInNotesWithAllValuesCommand extends AbstractMultiNoteCommand {
         mOldCornerNotes.clear();
         saveOldNotes();
 
-        cells.fillInCornerNotesWithAllValues();
+        cells.fillInCenterNotesWithAllValues();
     }
 }

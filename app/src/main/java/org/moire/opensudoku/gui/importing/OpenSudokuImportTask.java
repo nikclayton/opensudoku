@@ -130,8 +130,6 @@ public class OpenSudokuImportTask extends AbstractImportTask {
             } else if (eventType == XmlPullParser.END_TAG) {
                 lastTag = "";
             } else if (eventType == XmlPullParser.TEXT) {
-                if (lastTag.equals("name")) {
-                }
 
             }
             eventType = parser.next();

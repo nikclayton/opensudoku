@@ -10,7 +10,7 @@ import java.util.StringTokenizer;
 public abstract class AbstractMultiNoteCommand extends AbstractCellCommand {
 
     protected List<NoteEntry> mOldCornerNotes = new ArrayList<>();
-    protected List<NoteEntry> mOldCentreNotes = new ArrayList<>();
+    protected List<NoteEntry> mOldCenterNotes = new ArrayList<>();
 
     @Override
     public void serialize(StringBuilder data) {
@@ -24,8 +24,8 @@ public abstract class AbstractMultiNoteCommand extends AbstractCellCommand {
             ne.note.serialize(data);
         }
 
-        data.append(mOldCentreNotes.size()).append("|");
-        for (NoteEntry ne: mOldCentreNotes) {
+        data.append(mOldCenterNotes.size()).append("|");
+        for (NoteEntry ne: mOldCenterNotes) {
             data.append(ne.rowIndex).append("|");
             data.append(ne.colIndex).append("|");
             ne.note.serialize(data);
@@ -44,7 +44,7 @@ public abstract class AbstractMultiNoteCommand extends AbstractCellCommand {
             mOldCornerNotes.add(new NoteEntry(row, col, CellNote.deserialize(data.nextToken())));
         }
 
-        // Might be no more tokens if deserializing data from before centre notes existed.
+        // Might be no more tokens if deserializing data from before center notes existed.
         if (!data.hasMoreTokens()) {
             return;
         }
@@ -54,7 +54,7 @@ public abstract class AbstractMultiNoteCommand extends AbstractCellCommand {
             int row = Integer.parseInt(data.nextToken());
             int col = Integer.parseInt(data.nextToken());
 
-            mOldCentreNotes.add(new NoteEntry(row, col, CellNote.deserialize(data.nextToken())));
+            mOldCenterNotes.add(new NoteEntry(row, col, CellNote.deserialize(data.nextToken())));
         }
     }
 
@@ -66,8 +66,8 @@ public abstract class AbstractMultiNoteCommand extends AbstractCellCommand {
             cells.getCell(ne.rowIndex, ne.colIndex).setCornerNote(ne.note);
         }
 
-        for (NoteEntry ne: mOldCentreNotes) {
-            cells.getCell(ne.rowIndex, ne.colIndex).setCentreNote(ne.note);
+        for (NoteEntry ne: mOldCenterNotes) {
+            cells.getCell(ne.rowIndex, ne.colIndex).setCenterNote(ne.note);
         }
     }
 
@@ -76,7 +76,7 @@ public abstract class AbstractMultiNoteCommand extends AbstractCellCommand {
         for (int r = 0; r < CellCollection.SUDOKU_SIZE; r++) {
             for (int c = 0; c < CellCollection.SUDOKU_SIZE; c++) {
                 mOldCornerNotes.add(new NoteEntry(r, c, cells.getCell(r, c).getCornerNote()));
-                mOldCentreNotes.add(new NoteEntry(r, c, cells.getCell(r, c).getCentreNote()));
+                mOldCenterNotes.add(new NoteEntry(r, c, cells.getCell(r, c).getCenterNote()));
             }
         }
     }

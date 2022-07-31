@@ -5,11 +5,7 @@ import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Color;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffColorFilter;
 import android.view.ContextThemeWrapper;
-import android.widget.ImageButton;
-import android.widget.TextView;
 
 import androidx.preference.PreferenceManager;
 
@@ -394,46 +390,6 @@ public class ThemeUtils {
         return themeStyles.getResourceId(0, 0);
     }
 
-    public static void applyIMButtonStateToView(TextView view, IMButtonStyle style) {
-        switch (style) {
-            case DEFAULT:
-                view.getBackground().setColorFilter(null);
-                view.setTextColor(getCurrentThemeColor(view.getContext(), android.R.attr.textColorPrimary));
-                break;
-
-            case ACCENT:
-                view.getBackground().setColorFilter(new PorterDuffColorFilter(
-                        getCurrentThemeColor(view.getContext(), android.R.attr.colorAccent), PorterDuff.Mode.SRC_ATOP));
-                view.setTextColor(getCurrentThemeColor(view.getContext(), android.R.attr.textColorPrimaryInverse));
-                break;
-
-            case ACCENT_HIGHCONTRAST:
-                view.getBackground().setColorFilter(new PorterDuffColorFilter(
-                        getCurrentThemeColor(view.getContext(), android.R.attr.textColorPrimaryInverse), PorterDuff.Mode.SRC_ATOP));
-                view.setTextColor(getCurrentThemeColor(view.getContext(), android.R.attr.textColorPrimary));
-                break;
-        }
-    }
-
-    public static void applyIMButtonStateToImageButton(ImageButton view, IMButtonStyle style) {
-        switch (style) {
-            case DEFAULT:
-                view.getBackground().setColorFilter(null);
-                view.getDrawable().clearColorFilter();
-                break;
-
-            case ACCENT:
-                view.getBackground().setColorFilter(getCurrentThemeColor(view.getContext(), android.R.attr.colorAccent), PorterDuff.Mode.SRC_ATOP);
-                view.getDrawable().setColorFilter(getCurrentThemeColor(view.getContext(), android.R.attr.textColorPrimaryInverse), PorterDuff.Mode.SRC_ATOP);
-                break;
-
-            case ACCENT_HIGHCONTRAST:
-                view.getBackground().setColorFilter(getCurrentThemeColor(view.getContext(), android.R.attr.textColorPrimaryInverse), PorterDuff.Mode.SRC_ATOP);
-                view.getDrawable().setColorFilter(getCurrentThemeColor(view.getContext(), android.R.attr.textColorPrimary), PorterDuff.Mode.SRC_ATOP);
-                break;
-        }
-    }
-
     public static void applyCustomThemeToSudokuBoardViewFromContext(SudokuBoardView board, Context context) {
         SharedPreferences gameSettings = PreferenceManager.getDefaultSharedPreferences(context);
         board.setLineColor(gameSettings.getInt("custom_theme_lineColor", R.color.default_lineColor));
@@ -506,7 +462,7 @@ public class ThemeUtils {
         cells.getCell(0, 1).setValue(2);
         cells.getCell(0, 2).setValue(3);
 
-        cells.fillInCornerNotes();
+        cells.fillInCenterNotes();
         board.setCells(cells);
     }
 

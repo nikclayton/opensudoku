@@ -44,8 +44,8 @@ public abstract class AbstractCommand {
                     SetCellValueAndRemoveNotesCommand::new),
             new CommandDef(FillInNotesWithAllValuesCommand.class.getSimpleName(), "c7",
                     FillInNotesWithAllValuesCommand::new),
-            new CommandDef(EditCellCentreNoteCommand.class.getSimpleName(), "c8",
-                    EditCellCentreNoteCommand::new)
+            new CommandDef(EditCellCenterNoteCommand.class.getSimpleName(), "c8",
+                    EditCellCenterNoteCommand::new)
     };
 
     public static AbstractCommand deserialize(StringTokenizer data) {

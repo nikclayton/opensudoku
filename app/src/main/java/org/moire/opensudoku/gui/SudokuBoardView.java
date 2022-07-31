@@ -25,6 +25,7 @@ import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -75,7 +76,7 @@ public class SudokuBoardView extends View {
     private Paint mCellValuePaint;
     private Paint mCellValueReadonlyPaint;
     private Paint mCellCornerNotePaint;
-    private Paint mCellCentreNotePaint;
+    private Paint mCellCenterNotePaint;
     private int mNumberLeft;
     private int mNumberTop;
     private float mNoteTop;
@@ -104,7 +105,7 @@ public class SudokuBoardView extends View {
         mCellValueReadonlyPaint = new Paint();
         mCellValueInvalidPaint = new Paint();
         mCellCornerNotePaint = new Paint();
-        mCellCentreNotePaint = new Paint();
+        mCellCenterNotePaint = new Paint();
         mBackgroundColorSecondary = new Paint();
         mBackgroundColorReadOnly = new Paint();
         mBackgroundColorTouched = new Paint();
@@ -115,8 +116,8 @@ public class SudokuBoardView extends View {
         mCellValueReadonlyPaint.setAntiAlias(true);
         mCellValueInvalidPaint.setAntiAlias(true);
         mCellCornerNotePaint.setAntiAlias(true);
-        mCellCentreNotePaint.setAntiAlias(true);
-        mCellCentreNotePaint.setTextAlign(Paint.Align.CENTER);
+        mCellCenterNotePaint.setAntiAlias(true);
+        mCellCenterNotePaint.setTextAlign(Paint.Align.CENTER);
         mCellValueInvalidPaint.setColor(Color.RED);
 
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.SudokuBoardView/*, defStyle, 0*/);
@@ -178,7 +179,7 @@ public class SudokuBoardView extends View {
 
     public void setTextColorNote(int color) {
         mCellCornerNotePaint.setColor(color);
-        mCellCentreNotePaint.setColor(color);
+        mCellCenterNotePaint.setColor(color);
     }
 
     public int getBackgroundColorSecondary() {
@@ -397,12 +398,15 @@ public class SudokuBoardView extends View {
         // add some offset because in some resolutions notes are cut-off in the top
         mNoteTop = mCellHeight / 50.0f;
         mCellCornerNotePaint.setTextSize((mCellHeight - mNoteTop * 2) / 3.0f);
-        mCellCentreNotePaint.setTextSize(mCellCornerNotePaint.getTextSize());
+        mCellCenterNotePaint.setTextSize(mCellCornerNotePaint.getTextSize());
 
-        computeSectorLineWidth(width, height);
+        mSectorLineWidth = computeSectorLineWidth(width, height);
+
+        mBackgroundColorSelected.setStyle(Paint.Style.STROKE);
+        mBackgroundColorSelected.setStrokeWidth(mSectorLineWidth);
     }
 
-    private void computeSectorLineWidth(int widthInPx, int heightInPx) {
+    private int computeSectorLineWidth(int widthInPx, int heightInPx) {
         int sizeInPx = Math.min(widthInPx, heightInPx);
         float dipScale = getContext().getResources().getDisplayMetrics().density;
         float sizeInDip = sizeInPx / dipScale;
@@ -413,7 +417,7 @@ public class SudokuBoardView extends View {
             sectorLineWidthInDip = 3.0f;
         }
 
-        mSectorLineWidth = (int) (sectorLineWidthInDip * dipScale);
+        return (int) (sectorLineWidthInDip * dipScale);
     }
 
     @Override
@@ -423,7 +427,7 @@ public class SudokuBoardView extends View {
         // some notes:
         // Drawable has its own draw() method that takes your Canvas as an argument
 
-        // TODO: I don't get this, why do I need to substract padding only from one side?
+        // TODO: I don't get this, why do I need to subtract padding only from one side?
         int width = getWidth() - getPaddingRight();
         int height = getHeight() - getPaddingBottom();
 
@@ -441,12 +445,13 @@ public class SudokuBoardView extends View {
         // draw cells
         int cellLeft, cellTop;
         if (mCells != null) {
-
             boolean hasBackgroundColorReadOnly = mBackgroundColorReadOnly.getColor() != NO_COLOR;
 
             float numberAscent = mCellValuePaint.ascent();
             float noteAscent = mCellCornerNotePaint.ascent();
-            float noteWidth = mCellWidth / 3f;
+
+            int notesPerRow = 5;
+            float noteWidth = mCellWidth / notesPerRow;
 
             for (int row = 0; row < 9; row++) {
                 for (int col = 0; col < 9; col++) {
@@ -456,8 +461,7 @@ public class SudokuBoardView extends View {
                     cellTop = Math.round((row * mCellHeight) + paddingTop);
 
                     // draw read-only field background
-                    if (!cell.isEditable() && hasBackgroundColorReadOnly &&
-                            (mSelectedCell == null || mSelectedCell != cell)) {
+                    if (!cell.isEditable() && hasBackgroundColorReadOnly) {
                         if (mBackgroundColorReadOnly.getColor() != NO_COLOR) {
                             canvas.drawRect(
                                     cellLeft, cellTop,
@@ -469,7 +473,7 @@ public class SudokuBoardView extends View {
                     // highlight similar cells
                     boolean cellIsNotAlreadySelected = (mSelectedCell == null || mSelectedCell != cell);
                     boolean highlightedValueIsValid = mHighlightedValue != 0;
-                    boolean shouldHighlightCell = false;
+                    boolean shouldHighlightCell;
 
                     switch (mHighlightSimilarCells) {
                         default:
@@ -505,16 +509,6 @@ public class SudokuBoardView extends View {
                 }
             }
 
-            // highlight selected cell
-            if (!mReadonly && mSelectedCell != null) {
-                cellLeft = Math.round(mSelectedCell.getColumnIndex() * mCellWidth) + paddingLeft;
-                cellTop = Math.round(mSelectedCell.getRowIndex() * mCellHeight) + paddingTop;
-                canvas.drawRect(
-                        cellLeft, cellTop,
-                        cellLeft + mCellWidth, cellTop + mCellHeight,
-                        mBackgroundColorSelected);
-            }
-
             // visually highlight cell under the finger (to cope with touch screen
             // imprecision)
             if (mHighlightTouchedCell && mTouchedCell != null) {
@@ -528,6 +522,22 @@ public class SudokuBoardView extends View {
                         paddingLeft, cellTop,
                         width, cellTop + mCellHeight,
                         mBackgroundColorTouched);
+            }
+
+            // highlight selected cell
+            if (!mReadonly && mSelectedCell != null) {
+                cellLeft = Math.round(mSelectedCell.getColumnIndex() * mCellWidth) + paddingLeft;
+                cellTop = Math.round(mSelectedCell.getRowIndex() * mCellHeight) + paddingTop;
+
+                // The stroke is drawn half inside and half outside the given rect. This looks odd
+                // when the highlighted cell is at an edge/corner of the grid, as part of the stroke
+                // is cut-off. Compensate by adjusting the rect's bounds by half the stroke width to
+                // move it entirely inside the cell.
+                float halfStrokeWidth = mBackgroundColorSelected.getStrokeWidth() / 2;
+                canvas.drawRect(
+                        cellLeft + halfStrokeWidth, cellTop + halfStrokeWidth,
+                        cellLeft + mCellWidth - halfStrokeWidth, cellTop + mCellHeight - halfStrokeWidth,
+                        mBackgroundColorSelected);
             }
 
             for (int row = 0; row < 9; row++) {
@@ -551,25 +561,71 @@ public class SudokuBoardView extends View {
                                 cellTop + mNumberTop - numberAscent,
                                 cellValuePaint);
                     } else {
+                        // To draw notes the cell is divided up in to 3 rows (0-2) and notesPerRow
+                        // columns.
+                        //
+                        // "corner" notes are drawn in rows 0 and 2, up to 5 in row 0, up to 4 in
+                        // row 3, left-aligned.
+                        //
+                        // "centre" notes are drawn in row 1, centre-aligned.
                         if (!cell.getCornerNote().isEmpty()) {
                             Collection<Integer> numbers = cell.getCornerNote().getNotedNumbers();
                             int i = 0;
                             for (Integer number : numbers) {
-                                int c = i % 3;
-                                // First 3 numbers draw on row 0, remaining numbers draw on row 2.
-                                int r = i < 3 ? 0: 2;
-                                canvas.drawText(Integer.toString(number), cellLeft + c * noteWidth + 2, cellTop + mNoteTop - noteAscent + r * noteWidth - 1, mCellCornerNotePaint);
+                                int noteCol = i % notesPerRow;
+                                // First notesPerRow numbers draw on row 0, remaining draw on row 2.
+                                int noteRow = i < notesPerRow ? 0: 2;
+                                canvas.drawText(Integer.toString(number),
+                                        cellLeft + noteCol * noteWidth + 2,
+                                        cellTop + mNoteTop - noteAscent + (noteRow * mCellCornerNotePaint.getTextSize()) - 1,
+                                        mCellCornerNotePaint);
                                 i++;
                             }
                         }
-                        if (!cell.getCentreNote().isEmpty()) {
+                        if (!cell.getCenterNote().isEmpty()) {
                             StringBuilder sb = new StringBuilder();
-                            Collection<Integer> numbers = cell.getCentreNote().getNotedNumbers();
+                            Collection<Integer> numbers = cell.getCenterNote().getNotedNumbers();
                             for (Integer number : numbers) {
-                                sb.append(Integer.toString(number));
+                                sb.append(number);
                             }
                             String note = sb.toString();
-                            canvas.drawText(note, cellLeft + (mCellWidth / 2), cellTop + mNoteTop - noteAscent + 1 * noteWidth - 1, mCellCentreNotePaint);
+
+                            // Determine the font size (specifically, width) to use. The string
+                            // may run out of the cell (typically if it's more than 5 digits long).
+                            // If it will exceed the cell width, shrink the font.
+                            Rect bounds = new Rect();
+                            mCellCenterNotePaint.getTextBounds(note, 0, note.length(), bounds);
+
+                            // Horizontally align the centre note
+                            float offsetX = mCellWidth / 2f;
+
+
+                            // If the centre note's width exceeds some percentage of the cell's
+                            // width then scale down the size of the centre note, and recalculate
+                            // the y offset.
+                            float pct = bounds.width() / mCellWidth;
+                            float prevTextSize = 0;
+                            if (pct > 0.95) {
+                                prevTextSize = mCellCenterNotePaint.getTextSize();
+                                float scaledTextSize = prevTextSize * (1- (pct - 1));
+
+                                mCellCenterNotePaint.setTextSize(scaledTextSize);
+
+                                // Recalculate the text bounds as the size has changed
+                                mCellCenterNotePaint.getTextBounds(note, 0, note.length(), bounds);
+                            }
+
+                            // Vertically align the centre note
+                            float offsetY = (mCellHeight / 2f) + (bounds.height() / 2f);
+
+                            canvas.drawText(note,
+                                    cellLeft + offsetX,
+                                    cellTop + offsetY, /*cellTop + mNoteTop - noteAscent + mCellCenterNotePaint.getTextSize() - 1,*/
+                                    mCellCenterNotePaint);
+
+                            if (prevTextSize != 0) {
+                                mCellCenterNotePaint.setTextSize(prevTextSize);
+                            }
                         }
                     }
                 }
@@ -601,7 +657,6 @@ public class SudokuBoardView extends View {
             float y = r * mCellHeight + paddingTop;
             canvas.drawRect(paddingLeft, y - sectorLineWidth1, width, y + sectorLineWidth2, mSectorLinePaint);
         }
-
     }
 
     @Override

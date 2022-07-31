@@ -24,9 +24,8 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.widget.Button;
-import android.widget.ImageButton;
-import android.widget.TextView;
+
+import com.google.android.material.button.MaterialButton;
 
 import org.moire.opensudoku.R;
 import org.moire.opensudoku.game.Cell;
@@ -35,9 +34,9 @@ import org.moire.opensudoku.game.CellCollection.OnChangeListener;
 import org.moire.opensudoku.game.CellNote;
 import org.moire.opensudoku.game.SudokuGame;
 import org.moire.opensudoku.gui.HintsQueue;
+import org.moire.opensudoku.gui.NumberButton;
 import org.moire.opensudoku.gui.SudokuBoardView;
 import org.moire.opensudoku.gui.inputmethod.IMControlPanelStatePersister.StateBundle;
-import org.moire.opensudoku.utils.ThemeUtils;
 
 import java.util.HashMap;
 import java.util.List;
@@ -47,7 +46,7 @@ public class IMNumpad extends InputMethod {
 
     private static final int MODE_EDIT_VALUE = 0;
     private static final int MODE_EDIT_CORNER_NOTE = 1;
-    private static final int MODE_EDIT_CENTRE_NOTE = 2;
+    private static final int MODE_EDIT_CENTER_NOTE = 2;
 
     private boolean moveCellSelectionOnPress = true;
     private boolean mHighlightCompletedValues = true;
@@ -56,18 +55,17 @@ public class IMNumpad extends InputMethod {
 
     private int mEditMode = MODE_EDIT_VALUE;
 
-    private Map<Integer, Button> mNumberButtons;
+    private Map<Integer, NumberButton> mNumberButtons;
+
     // Conceptually these behave like RadioButtons. However, it's difficult to style a RadioButton
     // without re-implementing all the drawables, and they would require a custom parent layout
     // to work properly in a ConstraintLayout, so it's simpler and more consistent in the UI to
     // handle the toggle logic in the code here.
-    private ImageButton mEnterNumberButton;
-    private ImageButton mCornerNoteButton;
-    private ImageButton mCentreNoteButton;
+    private MaterialButton mEnterNumberButton;
+    private MaterialButton mCornerNoteButton;
+    private MaterialButton mCenterNoteButton;
 
-    private ImageButton mClearButton;
-
-    private OnClickListener mNumberButtonClick = v -> {
+    private final OnClickListener mNumberButtonClicked = v -> {
         int selNumber = (Integer) v.getTag();
         Cell selCell = mSelectedCell;
 
@@ -89,23 +87,23 @@ public class IMNumpad extends InputMethod {
                         mGame.setCellCornerNote(selCell, selCell.getCornerNote().toggleNumber(selNumber));
                     }
                     break;
-                case MODE_EDIT_CENTRE_NOTE:
+                case MODE_EDIT_CENTER_NOTE:
                     if (selNumber == 0) {
-                        mGame.setCellCentreNote(selCell, CellNote.EMPTY);
+                        mGame.setCellCenterNote(selCell, CellNote.EMPTY);
                     } else if (selNumber > 0 && selNumber <= 9) {
-                        mGame.setCellCentreNote(selCell, selCell.getCentreNote().toggleNumber(selNumber));
+                        mGame.setCellCenterNote(selCell, selCell.getCenterNote().toggleNumber(selNumber));
                     }
                     break;
             }
         }
     };
 
-    private OnClickListener mModeButtonClicked = v -> {
+    private final OnClickListener mModeButtonClicked = v -> {
         mEditMode = (Integer) v.getTag();
         update();
     };
 
-    private OnChangeListener mOnCellsChangeListener = () -> {
+    private final OnChangeListener mOnCellsChangeListener = () -> {
         if (mActive) {
             update();
         }
@@ -169,12 +167,12 @@ public class IMNumpad extends InputMethod {
         for (Integer num : mNumberButtons.keySet()) {
             View b = mNumberButtons.get(num);
             b.setTag(num);
-            b.setOnClickListener(mNumberButtonClick);
+            b.setOnClickListener(mNumberButtonClicked);
         }
 
-        mClearButton = controlPanel.findViewById(R.id.button_clear);
-        mClearButton.setTag(0);
-        mClearButton.setOnClickListener(mNumberButtonClick);
+        View clearButton = controlPanel.findViewById(R.id.button_clear);
+        clearButton.setTag(0);
+        clearButton.setOnClickListener(mNumberButtonClicked);
 
         mEnterNumberButton = controlPanel.findViewById(R.id.enter_number);
         mEnterNumberButton.setTag(MODE_EDIT_VALUE);
@@ -184,9 +182,9 @@ public class IMNumpad extends InputMethod {
         mCornerNoteButton.setTag(MODE_EDIT_CORNER_NOTE);
         mCornerNoteButton.setOnClickListener(mModeButtonClicked);
 
-        mCentreNoteButton = controlPanel.findViewById(R.id.centre_note);
-        mCentreNoteButton.setTag(MODE_EDIT_CENTRE_NOTE);
-        mCentreNoteButton.setOnClickListener(mModeButtonClicked);
+        mCenterNoteButton = controlPanel.findViewById(R.id.center_note);
+        mCenterNoteButton.setTag(MODE_EDIT_CENTER_NOTE);
+        mCenterNoteButton.setOnClickListener(mModeButtonClicked);
 
         return controlPanel;
     }
@@ -231,56 +229,46 @@ public class IMNumpad extends InputMethod {
 
         switch (mEditMode) {
             case MODE_EDIT_VALUE:
-                // Keyboard should highlight the current value, which may be empty
-                ThemeUtils.applyIMButtonStateToImageButton(mEnterNumberButton, ThemeUtils.IMButtonStyle.ACCENT);
-                ThemeUtils.applyIMButtonStateToImageButton(mCornerNoteButton, ThemeUtils.IMButtonStyle.DEFAULT);
-                ThemeUtils.applyIMButtonStateToImageButton(mCentreNoteButton, ThemeUtils.IMButtonStyle.DEFAULT);
+                mEnterNumberButton.setChecked(true);
+                mCornerNoteButton.setChecked(false);
+                mCenterNoteButton.setChecked(false);
 
                 int selectedNumber = mSelectedCell == null ? 0 : mSelectedCell.getValue();
-                for (Button b : mNumberButtons.values()) {
-                    if (b.getTag().equals(selectedNumber)) {
-                        ThemeUtils.applyIMButtonStateToView(b, ThemeUtils.IMButtonStyle.ACCENT);
-                    } else {
-                        ThemeUtils.applyIMButtonStateToView(b, ThemeUtils.IMButtonStyle.DEFAULT);
-                    }
+                for (MaterialButton b : mNumberButtons.values()) {
+                    b.setChecked(b.getTag().equals(selectedNumber));
                 }
 
                 break;
             case MODE_EDIT_CORNER_NOTE:
-                // Keyboard should highlight all the buttons corresponding to active corner notes
-                ThemeUtils.applyIMButtonStateToImageButton(mEnterNumberButton, ThemeUtils.IMButtonStyle.DEFAULT);
-                ThemeUtils.applyIMButtonStateToImageButton(mCornerNoteButton, ThemeUtils.IMButtonStyle.ACCENT);
-                ThemeUtils.applyIMButtonStateToImageButton(mCentreNoteButton, ThemeUtils.IMButtonStyle.DEFAULT);
+                mEnterNumberButton.setChecked(false);
+                mCornerNoteButton.setChecked(true);
+                mCenterNoteButton.setChecked(false);
 
                 note = mSelectedCell == null ? new CellNote() : mSelectedCell.getCornerNote();
                 notedNumbers = note.getNotedNumbers();
-                for (Button b : mNumberButtons.values()) {
-                    if (notedNumbers.contains(b.getTag())) {
-                        ThemeUtils.applyIMButtonStateToView((TextView) b, ThemeUtils.IMButtonStyle.ACCENT);
-                    } else {
-                        ThemeUtils.applyIMButtonStateToView((TextView) b, ThemeUtils.IMButtonStyle.DEFAULT);
-                    }
+                for (MaterialButton b : mNumberButtons.values()) {
+                    b.setChecked(notedNumbers.contains(b.getTag()));
                 }
 
                 break;
-            case MODE_EDIT_CENTRE_NOTE:
-                // Keyboard should highlight all the buttons corresponding to active centre notes
-                ThemeUtils.applyIMButtonStateToImageButton(mEnterNumberButton, ThemeUtils.IMButtonStyle.DEFAULT);
-                ThemeUtils.applyIMButtonStateToImageButton(mCornerNoteButton, ThemeUtils.IMButtonStyle.DEFAULT);
-                ThemeUtils.applyIMButtonStateToImageButton(mCentreNoteButton, ThemeUtils.IMButtonStyle.ACCENT);
+            case MODE_EDIT_CENTER_NOTE:
+                mEnterNumberButton.setChecked(false);
+                mCornerNoteButton.setChecked(false);
+                mCenterNoteButton.setChecked(true);
 
-                note = mSelectedCell == null ? new CellNote() : mSelectedCell.getCentreNote();
+                note = mSelectedCell == null ? new CellNote() : mSelectedCell.getCenterNote();
                 notedNumbers = note.getNotedNumbers();
-                for (Button b : mNumberButtons.values()) {
-                    if (notedNumbers.contains(b.getTag())) {
-                        ThemeUtils.applyIMButtonStateToView((TextView) b, ThemeUtils.IMButtonStyle.ACCENT);
-                    } else {
-                        ThemeUtils.applyIMButtonStateToView((TextView) b, ThemeUtils.IMButtonStyle.DEFAULT);
-                    }
+                for (MaterialButton b : mNumberButtons.values()) {
+                    b.setChecked(notedNumbers.contains(b.getTag()));
                 }
                 break;
         }
 
+        for (NumberButton b : mNumberButtons.values()) {
+            b.setMode(mEditMode);
+        }
+
+        // TODO: This is identical across IMSingleNumber, IMNumberPad, IMPopupDialog
         Map<Integer, Integer> valuesUseCount = null;
         if (mHighlightCompletedValues || mShowNumberTotals)
             valuesUseCount = mGame.getCells().getValuesUseCount();
@@ -291,16 +279,16 @@ public class IMNumpad extends InputMethod {
                 boolean highlightValue = entry.getValue() >= CellCollection.SUDOKU_SIZE;
                 boolean selected = entry.getKey() == selectedNumber;
                 View b = mNumberButtons.get(entry.getKey());
-                if (highlightValue && !selected) {
-                    ThemeUtils.applyIMButtonStateToView((TextView) b, ThemeUtils.IMButtonStyle.ACCENT_HIGHCONTRAST);
-                }
+                //ThemeUtils.applyIMButtonStateToView((TextView) b, ThemeUtils.IMButtonStyle.ACCENT_HIGHCONTRAST);
+                // TODO: This should probably set the disabled state on the button
             }
         }
 
+        // TODO: This is identical across IMSingleNumber.java and IMNumberPad.java
         if (mShowNumberTotals) {
             for (Map.Entry<Integer, Integer> entry : valuesUseCount.entrySet()) {
-                View b = mNumberButtons.get(entry.getKey());
-                ((TextView) b).setText(entry.getKey() + " (" + entry.getValue() + ")");
+                NumberButton b = mNumberButtons.get(entry.getKey());
+                b.setNumbersPlaced(entry.getValue());
             }
         }
     }

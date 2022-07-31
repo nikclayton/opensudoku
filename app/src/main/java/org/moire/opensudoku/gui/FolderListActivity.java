@@ -20,7 +20,6 @@
 
 package org.moire.opensudoku.gui;
 
-import android.Manifest;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.ComponentName;
@@ -30,7 +29,6 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -48,8 +46,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 
 import org.moire.opensudoku.R;
 import org.moire.opensudoku.db.FolderColumns;
@@ -171,7 +167,7 @@ public class FolderListActivity extends ThemedActivity {
                 .setIcon(R.drawable.ic_add);
         menu.add(0, MENU_ITEM_IMPORT, 0, R.string.import_file)
                 .setShortcut('8', 'i')
-                .setIcon(R.drawable.ic_cloud_download);
+                .setIcon(R.drawable.ic_baseline_download_24);
         menu.add(0, MENU_ITEM_EXPORT_ALL, 1, R.string.export_all_folders)
                 .setShortcut('7', 'e')
                 .setIcon(R.drawable.ic_share);

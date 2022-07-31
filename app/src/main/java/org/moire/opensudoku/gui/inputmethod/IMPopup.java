@@ -59,9 +59,17 @@ public class IMPopup extends InputMethod {
      */
     private OnNoteEditListener mOnNoteEditListener = new OnNoteEditListener() {
         @Override
-        public boolean onNoteEdit(Integer[] numbers) {
+        public boolean onCornerNoteEdit(Integer[] numbers) {
             if (mSelectedCell != null) {
                 mGame.setCellCornerNote(mSelectedCell, CellNote.fromIntArray(numbers));
+            }
+            return true;
+        }
+
+        @Override
+        public boolean onCenterNoteEdit(Integer[] numbers) {
+            if (mSelectedCell != null) {
+                mGame.setCellCenterNote(mSelectedCell, CellNote.fromIntArray(numbers));
             }
             return true;
         }
@@ -119,9 +127,10 @@ public class IMPopup extends InputMethod {
         if (cell.isEditable()) {
             ensureEditCellDialog();
 
-            mEditCellDialog.resetButtons();
-            mEditCellDialog.updateNumber(cell.getValue());
-            mEditCellDialog.updateNote(cell.getCornerNote().getNotedNumbers());
+            mEditCellDialog.resetState();
+            mEditCellDialog.setNumber(cell.getValue());
+            mEditCellDialog.setCornerNotes(cell.getCornerNote().getNotedNumbers());
+            mEditCellDialog.setCenterNotes(cell.getCenterNote().getNotedNumbers());
 
             Map<Integer, Integer> valuesUseCount = null;
             if (mHighlightCompletedValues || mShowNumberTotals)
@@ -136,9 +145,7 @@ public class IMPopup extends InputMethod {
             }
 
             if (mShowNumberTotals) {
-                for (Map.Entry<Integer, Integer> entry : valuesUseCount.entrySet()) {
-                    mEditCellDialog.setValueCount(entry.getKey(), entry.getValue());
-                }
+                mEditCellDialog.setValueCount(valuesUseCount);
             }
             mEditCellDialog.show();
         } else {

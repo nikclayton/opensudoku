@@ -14,6 +14,6 @@ public class FillInNotesCommand extends AbstractMultiNoteCommand {
         mOldCornerNotes.clear();
         saveOldNotes();
 
-        cells.fillInCornerNotes();
+        cells.fillInCenterNotes();
     }
 }

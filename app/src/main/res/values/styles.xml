@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme" parent="Theme.AppCompat" />
+<!--    <style name="Theme" parent="Theme.AppCompat" />-->
+<!--    <style name="Theme" parent="Theme.MaterialComponents.Light.Bridge" />-->
+    <style name="Theme" parent="Theme.Material3.Light" />
 
     <style name="Theme.Default">
         <item name="colorPrimary">@color/default_backgroundColorTouched</item>
@@ -20,9 +22,15 @@
         <item name="backgroundColorHighlighted">@color/default_backgroundColorHighlighted</item>
     </style>
 
-    <style name="Theme.OpenSudoku" parent="Theme.AppCompat.Light">
+<!--    <style name="Theme.OpenSudoku" parent="Theme.MaterialComponents.Light.Bridge">-->
+    <style name="Theme.OpenSudoku" parent="Theme.Material3.Light">
+        <!-- M3 (i.e., recognised by Material3 components)-->
         <item name="colorPrimary">@color/opensudoku_colorPrimary</item>
+
         <item name="colorPrimaryDark">@color/opensudoku_colorPrimaryDark</item>
+
+        <!-- M3 -->
+        <item name="colorSecondary">@color/opensudoku_colorPrimaryDark</item>
         <item name="colorAccent">@color/opensudoku_colorAccent</item>
         <item name="lineColor">@color/opensudoku_colorPrimaryDark</item>
         <item name="sectorLineColor">@color/opensudoku_colorPrimaryDark</item>
@@ -35,6 +43,26 @@
         <item name="backgroundColorTouched">@color/opensudoku_colorAccent</item>
         <item name="backgroundColorSelected">@color/opensudoku_colorPrimaryDark</item>
         <item name="backgroundColorHighlighted">@color/opensudoku_colorPrimary</item>
+
+        <!-- Colors required by Material, see https://material.io/blog/android-material-theme-color -->
+        <!-- Should update the colours in the themes to use the same names to reduce
+             duplication -->
+
+        <!-- Foreground color for a button that is *not* enabled/checked -->
+<!--        <item name="colorOnSurface">@color/opensudoku_colorPrimary</item>-->
+        <item name="colorOnSurface">@color/grey_900</item>
+
+        <!-- Background color for a button that is *not* enabled/checked -->
+        <!-- TODO: setting colorContainer doesn't seem to work, find out why -->
+<!--        <item name="colorContainer">@color/opensudoku_colorAccent</item>-->
+        <item name="colorContainer">@color/opensudoku_colorPrimaryLight</item>
+
+        <!-- Foreground color for a button that is enabled/checked -->
+<!--        <item name="colorOnSecondaryContainer">@android:color/black</item>-->
+        <item name="colorOnSecondaryContainer">@color/grey_200</item>
+
+        <!-- Background color for a button that is enabled/checked-->
+        <item name="colorSecondaryContainer">@color/opensudoku_colorPrimaryDark</item>
     </style>
 
     <style name="Theme.AMOLED">
@@ -4437,4 +4465,26 @@
         <item name="colorButtonNormal">@color/blue_grey_900</item>
     </style>
 
+    <!-- Buttons that show a number the user can select to enter, like a keypad -->
+    <style name="keypadButton" parent="@style/Widget.Material3.Button.IconButton">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">0dp</item>
+        <item name="android:checkable">true</item>
+        <item name="cornerRadius">4dp</item>
+        <item name="android:foregroundTint">@color/opensudoku_colorPrimaryDark</item>
+    </style>
+
+    <style name="popupButton" parent="@style/Widget.Material3.Button.IconButton">
+        <item name="android:layout_width">70dp</item>
+        <item name="android:layout_height">70dp</item>
+        <item name="android:checkable">true</item>
+        <item name="cornerRadius">4dp</item>
+    </style>
+
+<!--    <style name="popupButton" parent="@style/Widget.Material3.Button.IconButton">-->
+<!--        <item name="android:layout_width">95dp</item>-->
+<!--        <item name="android:layout_height">70dp</item>-->
+<!--        <item name="android:checkable">true</item>-->
+<!--        <item name="cornerRadius">4dp</item>-->
+<!--    </style>-->
 </resources>

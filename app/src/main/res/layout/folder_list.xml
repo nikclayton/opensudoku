@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:orientation="vertical">
@@ -14,7 +15,9 @@
 
     <Button
         android:id="@+id/get_more_puzzles"
-        android:layout_width="fill_parent"
+        style="@style/Widget.Material3.Button.TextButton"
+        app:icon="@drawable/ic_baseline_download_24"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:gravity="center"
         android:text="@string/get_more_puzzles_online" />

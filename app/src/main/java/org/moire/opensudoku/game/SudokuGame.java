@@ -28,7 +28,7 @@ import androidx.annotation.Nullable;
 import org.moire.opensudoku.game.command.AbstractCommand;
 import org.moire.opensudoku.game.command.ClearAllNotesCommand;
 import org.moire.opensudoku.game.command.CommandStack;
-import org.moire.opensudoku.game.command.EditCellCentreNoteCommand;
+import org.moire.opensudoku.game.command.EditCellCenterNoteCommand;
 import org.moire.opensudoku.game.command.EditCellCornerNoteCommand;
 import org.moire.opensudoku.game.command.FillInNotesCommand;
 import org.moire.opensudoku.game.command.FillInNotesWithAllValuesCommand;
@@ -49,7 +49,7 @@ public class SudokuGame {
     private long mTime;
     private long mLastPlayed;
     private String mCornerNote;
-    private String mCentreNote;
+    private String mCenterNote;
     private CellCollection mCells;
     private SudokuSolver mSolver;
     private boolean mUsedSolver = false;
@@ -79,7 +79,7 @@ public class SudokuGame {
     public void saveState(Bundle outState) {
         outState.putLong("id", mId);
         outState.putString("note", mCornerNote);
-        outState.putString("centre_note", mCentreNote);
+        outState.putString("center_note", mCenterNote);
         outState.putLong("created", mCreated);
         outState.putInt("state", mState);
         outState.putLong("time", mTime);
@@ -91,7 +91,7 @@ public class SudokuGame {
     public void restoreState(Bundle inState) {
         mId = inState.getLong("id");
         mCornerNote = inState.getString("note");
-        mCentreNote = inState.getString("centre_note");
+        mCenterNote = inState.getString("center_note");
         mCreated = inState.getLong("created");
         mState = inState.getInt("state");
         mTime = inState.getLong("time");
@@ -115,12 +115,12 @@ public class SudokuGame {
         mCornerNote = note;
     }
 
-    public String getCentreNote() {
-        return mCentreNote;
+    public String getCenterNote() {
+        return mCenterNote;
     }
 
-    public void setCentreNote(String note) {
-        mCentreNote = note;
+    public void setCenterNote(String note) {
+        mCenterNote = note;
     }
 
     public long getCreated() {
@@ -250,12 +250,12 @@ public class SudokuGame {
     }
 
     /**
-     * Sets centre note attached to the given cell.
+     * Sets center note attached to the given cell.
      *
      * @param cell
      * @param note
      */
-    public void setCellCentreNote(Cell cell, CellNote note) {
+    public void setCellCenterNote(Cell cell, CellNote note) {
         if (cell == null) {
             throw new IllegalArgumentException("Cell cannot be null.");
         }
@@ -264,7 +264,7 @@ public class SudokuGame {
         }
 
         if (cell.isEditable()) {
-            executeCommand(new EditCellCentreNoteCommand(cell, note));
+            executeCommand(new EditCellCenterNoteCommand(cell, note));
         }
     }
 
@@ -396,7 +396,7 @@ public class SudokuGame {
                 if (cell.isEditable()) {
                     cell.setValue(0);
                     cell.setCornerNote(new CellNote());
-                    cell.setCentreNote(new CellNote());
+                    cell.setCenterNote(new CellNote());
                 }
             }
         }

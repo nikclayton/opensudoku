@@ -5,10 +5,9 @@
     android:layout_width="wrap_content"
     android:layout_height="wrap_content">
 
-    <Button
+    <org.moire.opensudoku.gui.NumberButton
         android:id="@+id/button_1"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
+        style="@style/keypadButton"
         android:text="1"
         app:layout_constraintBottom_toTopOf="@+id/button_4"
         app:layout_constraintDimensionRatio="h,1:1"
@@ -17,10 +16,9 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <Button
+    <org.moire.opensudoku.gui.NumberButton
         android:id="@+id/button_2"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
+        style="@style/keypadButton"
         android:text="2"
         app:layout_constraintBottom_toTopOf="@+id/button_5"
         app:layout_constraintDimensionRatio="h,1:1"
@@ -28,20 +26,18 @@
         app:layout_constraintStart_toEndOf="@+id/button_1"
         app:layout_constraintTop_toTopOf="@id/button_1" />
 
-    <Button
+    <org.moire.opensudoku.gui.NumberButton
         android:id="@+id/button_3"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
+        style="@style/keypadButton"
         android:text="3"
         app:layout_constraintBottom_toTopOf="@+id/button_6"
         app:layout_constraintDimensionRatio="h,1:1"
         app:layout_constraintStart_toEndOf="@+id/button_2"
         app:layout_constraintTop_toTopOf="@id/button_1" />
 
-    <Button
+    <org.moire.opensudoku.gui.NumberButton
         android:id="@+id/button_4"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
+        style="@style/keypadButton"
         android:text="4"
         app:layout_constraintBottom_toTopOf="@+id/button_7"
         app:layout_constraintDimensionRatio="h,1:1"
@@ -49,10 +45,9 @@
         app:layout_constraintStart_toStartOf="@id/button_1"
         app:layout_constraintTop_toBottomOf="@+id/button_1" />
 
-    <Button
+    <org.moire.opensudoku.gui.NumberButton
         android:id="@+id/button_5"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
+        style="@style/keypadButton"
         android:text="5"
         app:layout_constraintBottom_toTopOf="@+id/button_8"
         app:layout_constraintDimensionRatio="h,1:1"
@@ -62,10 +57,9 @@
         app:layout_constraintTop_toBottomOf="@+id/button_2"
         app:layout_constraintTop_toTopOf="@id/button_4" />
 
-    <Button
+    <org.moire.opensudoku.gui.NumberButton
         android:id="@+id/button_6"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
+        style="@style/keypadButton"
         android:text="6"
         app:layout_constraintBottom_toTopOf="@+id/button_9"
         app:layout_constraintDimensionRatio="h,1:1"
@@ -75,20 +69,18 @@
         app:layout_constraintTop_toBottomOf="@+id/button_3"
         app:layout_constraintTop_toTopOf="@id/button_5" />
 
-    <Button
+    <org.moire.opensudoku.gui.NumberButton
         android:id="@+id/button_7"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
+        style="@style/keypadButton"
         android:text="7"
         app:layout_constraintDimensionRatio="h,1:1"
         app:layout_constraintEnd_toEndOf="@id/button_4"
         app:layout_constraintStart_toStartOf="@id/button_4"
         app:layout_constraintTop_toBottomOf="@+id/button_4" />
 
-    <Button
+    <org.moire.opensudoku.gui.NumberButton
         android:id="@+id/button_8"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
+        style="@style/keypadButton"
         android:text="8"
         app:layout_constraintDimensionRatio="h,1:1"
         app:layout_constraintEnd_toEndOf="@id/button_5"
@@ -97,33 +89,28 @@
         app:layout_constraintTop_toBottomOf="@+id/button_5"
         app:layout_constraintTop_toTopOf="@id/button_7" />
 
-    <Button
+    <org.moire.opensudoku.gui.NumberButton
         android:id="@+id/button_9"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
+        style="@style/keypadButton"
         android:text="9"
         app:layout_constraintDimensionRatio="h,1:1"
         app:layout_constraintStart_toEndOf="@+id/button_8"
         app:layout_constraintTop_toBottomOf="@+id/button_6" />
 
-    <ImageButton
+    <org.moire.opensudoku.gui.IconButton
         android:id="@+id/enter_number"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:scaleType="fitCenter"
-        android:src="@drawable/ic_enter_number"
+        style="@style/keypadButton"
+        app:icon="@drawable/ic_enter_number"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintDimensionRatio="1:1"
         app:layout_constraintEnd_toEndOf="@id/button_7"
         app:layout_constraintStart_toStartOf="@id/button_1"
         app:layout_constraintTop_toBottomOf="@+id/button_7" />
 
-    <ImageButton
+    <org.moire.opensudoku.gui.IconButton
         android:id="@+id/corner_note"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:scaleType="fitCenter"
-        android:src="@drawable/ic_corner_note"
+        style="@style/keypadButton"
+        app:icon="@drawable/ic_corner_note"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintDimensionRatio="1:1"
         app:layout_constraintEnd_toEndOf="@id/button_8"
@@ -131,22 +118,21 @@
         app:layout_constraintTop_toBottomOf="@+id/button_8"
         app:layout_constraintTop_toTopOf="@id/enter_number" />
 
-    <ImageButton
-        android:id="@+id/centre_note"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:scaleType="fitCenter"
-        android:src="@drawable/ic_centre_note"
+    <org.moire.opensudoku.gui.IconButton
+        android:id="@+id/center_note"
+        style="@style/keypadButton"
+        app:icon="@drawable/ic_center_note"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="@id/button_9"
         app:layout_constraintStart_toStartOf="@id/button_9"
         app:layout_constraintTop_toBottomOf="@+id/button_9" />
 
-    <ImageButton
+    <org.moire.opensudoku.gui.IconButton
         android:id="@+id/button_clear"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:src="@drawable/ic_outline_backspace_24"
+        style="@style/keypadButton"
+        android:checkable="false"
+        app:icon="@drawable/ic_outline_backspace_24"
+        app:iconTint="@color/grey_900"
         app:layout_constraintBottom_toBottomOf="@id/button_9"
         app:layout_constraintDimensionRatio="h,1:1"
         app:layout_constraintEnd_toEndOf="parent"
@@ -155,12 +141,14 @@
 
     <Button
         android:id="@+id/switch_input_mode"
-        style="@style/Widget.AppCompat.Button.Colored"
+        style="@style/Widget.Material3.Button.TonalButton"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintBottom_toBottomOf="@id/centre_note"
+        android:textAppearance="?attr/textAppearanceLabelLarge"
+        app:cornerRadius="4dp"
+        app:layout_constraintBottom_toBottomOf="@id/center_note"
         app:layout_constraintDimensionRatio="h,1:1"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@id/centre_note"
-        app:layout_constraintTop_toTopOf="@id/centre_note" />
+        app:layout_constraintStart_toEndOf="@id/center_note"
+        app:layout_constraintTop_toTopOf="@id/center_note" />
 </androidx.constraintlayout.widget.ConstraintLayout>

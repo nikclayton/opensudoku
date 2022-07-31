@@ -63,7 +63,7 @@ public class CellCollection {
     public static int DATA_VERSION_3 = 3;
 
     /**
-     * Centre notes
+     * Center notes
      */
     public static int DATA_VERSION_4 = 4;
 
@@ -72,7 +72,7 @@ public class CellCollection {
     private static Pattern DATA_PATTERN_VERSION_1 = Pattern.compile("^version: 1\\n((?#value)\\d\\|(?#note)((\\d,)+|-)\\|(?#editable)[01]\\|){0,81}$");
     private static Pattern DATA_PATTERN_VERSION_2 = Pattern.compile("^version: 2\\n((?#value)\\d\\|(?#note)(\\d){1,3}\\|{1,2}(?#editable)[01]\\|){0,81}$");
     private static Pattern DATA_PATTERN_VERSION_3 = Pattern.compile("^version: 3\\n((?#value)\\d\\|(?#note)(\\d){1,3}\\|(?#editable)[01]\\|){0,81}$");
-    private static Pattern DATA_PATTERN_VERSION_4 = Pattern.compile("^version: 4\\n((?#value)\\d\\|(?#note)(\\d){1,3}\\|(?#centreNote)\\|(?#editable)[01]\\|){0,81}$");
+    private static Pattern DATA_PATTERN_VERSION_4 = Pattern.compile("^version: 4\\n((?#value)\\d\\|(?#note)(\\d){1,3}\\|(?#centerNote)\\|(?#editable)[01]\\|){0,81}$");
     private final List<OnChangeListener> mChangeListeners = new ArrayList<>();
     // TODO: An array of ints is a much better than an array of Integers, but this also generalizes to the fact that two parallel arrays of ints are also a lot more efficient than an array of (int,int) objects
     // Cell's data.
@@ -381,21 +381,21 @@ public class CellCollection {
     }
 
     /**
-     * Fills in all valid corner notes for all cells based on the values in each row, column,
+     * Fills in all valid center notes for all cells based on the values in each row, column,
      * and sector. This is a destructive operation in that the existing notes are overwritten.
      */
-    public void fillInCornerNotes() {
+    public void fillInCenterNotes() {
         for (int r = 0; r < SUDOKU_SIZE; r++) {
             for (int c = 0; c < SUDOKU_SIZE; c++) {
                 Cell cell = getCell(r, c);
-                cell.setCornerNote(new CellNote());
+                cell.setCenterNote(new CellNote());
 
                 CellGroup row = cell.getRow();
                 CellGroup column = cell.getColumn();
                 CellGroup sector = cell.getSector();
                 for (int i = 1; i <= SUDOKU_SIZE; i++) {
                     if (row.DoesntContain(i) && column.DoesntContain(i) && sector.DoesntContain(i)) {
-                        cell.setCornerNote(cell.getCornerNote().addNumber(i));
+                        cell.setCenterNote(cell.getCenterNote().addNumber(i));
                     }
                 }
             }
@@ -403,16 +403,16 @@ public class CellCollection {
     }
 
     /**
-     * Fills in corner notes with all values for all cells.
+     * Fills in center notes with all values for all cells.
      * This is a destructive operation in that the existing notes are overwritten.
      */
-    public void fillInCornerNotesWithAllValues() {
+    public void fillInCenterNotesWithAllValues() {
         for (int r = 0; r < SUDOKU_SIZE; r++) {
             for (int c = 0; c < SUDOKU_SIZE; c++) {
                 Cell cell = getCell(r, c);
-                cell.setCornerNote(new CellNote());
+                cell.setCenterNote(new CellNote());
                 for (int i = 1; i <= SUDOKU_SIZE; i++) {
-                    cell.setCornerNote(cell.getCornerNote().addNumber(i));
+                    cell.setCenterNote(cell.getCenterNote().addNumber(i));
                 }
             }
         }
@@ -423,14 +423,14 @@ public class CellCollection {
             return;
         }
 
-        List<Cell> cells = new ArrayList<Cell>();
+        List<Cell> cells = new ArrayList<>();
         cells.addAll(Arrays.asList(cell.getRow().getCells()));
         cells.addAll(Arrays.asList(cell.getColumn().getCells()));
         cells.addAll(Arrays.asList(cell.getSector().getCells()));
 
         for (Cell c : cells) {
             c.setCornerNote(c.getCornerNote().removeNumber(number));
-            c.setCentreNote(c.getCentreNote().removeNumber(number));
+            c.setCenterNote(c.getCenterNote().removeNumber(number));
         }
     }
 

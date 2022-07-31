@@ -13,8 +13,6 @@ import org.moire.opensudoku.utils.Const;
 import org.xmlpull.v1.XmlSerializer;
 
 import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;

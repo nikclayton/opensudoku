@@ -22,7 +22,6 @@ package org.moire.opensudoku.gui;
 
 import android.app.Dialog;
 import android.content.ClipData;
-import android.content.ClipDescription;
 import android.content.ClipboardManager;
 import android.content.ComponentName;
 import android.content.Context;

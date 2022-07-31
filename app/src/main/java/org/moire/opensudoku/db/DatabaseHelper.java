@@ -54,7 +54,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 + SudokuColumns.LAST_PLAYED + " INTEGER,"
                 + SudokuColumns.DATA + " Text,"
                 + SudokuColumns.PUZZLE_NOTE + " Text,"
-                + SudokuColumns.CENTRE_NOTE + " Text,"
+                + SudokuColumns.CENTER_NOTE + " Text,"
                 + SudokuColumns.COMMAND_STACK + " Text"
                 + ");");
 
@@ -193,7 +193,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         }
 
         if (oldVersion <= 9) {
-            db.execSQL("ALTER TABLE " + SudokuDatabase.SUDOKU_TABLE_NAME + " ADD COLUMN " + SudokuColumns.CENTRE_NOTE + " TEXT");
+            db.execSQL("ALTER TABLE " + SudokuDatabase.SUDOKU_TABLE_NAME + " ADD COLUMN " + SudokuColumns.CENTER_NOTE + " TEXT");
         }
     }
 

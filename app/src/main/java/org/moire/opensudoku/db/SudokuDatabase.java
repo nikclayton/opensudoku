@@ -339,7 +339,7 @@ public class SudokuDatabase {
         int state = cursor.getInt(cursor.getColumnIndex(SudokuColumns.STATE));
         long time = cursor.getLong(cursor.getColumnIndex(SudokuColumns.TIME));
         String cornerNote = cursor.getString(cursor.getColumnIndex(SudokuColumns.PUZZLE_NOTE));
-        String centreNote = cursor.getString(cursor.getColumnIndex(SudokuColumns.CENTRE_NOTE));
+        String centerNote = cursor.getString(cursor.getColumnIndex(SudokuColumns.CENTER_NOTE));
 
         SudokuGame sudoku = new SudokuGame();
         sudoku.setId(id);
@@ -349,7 +349,7 @@ public class SudokuDatabase {
         sudoku.setState(state);
         sudoku.setTime(time);
         sudoku.setCornerNote(cornerNote);
-        sudoku.setCentreNote(centreNote);
+        sudoku.setCenterNote(centerNote);
 
         if (sudoku.getState() == SudokuGame.GAME_STATE_PLAYING) {
             String command_stack = cursor.getString(cursor.getColumnIndex(SudokuColumns.COMMAND_STACK));
